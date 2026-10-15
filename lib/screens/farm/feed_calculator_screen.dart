@@ -213,86 +213,91 @@ class _FeedCalculatorScreenState extends State<FeedCalculatorScreen> {
             ],
           ),
           const SizedBox(height: 9),
+
+          // === ВНЕШНИЙ КОНТЕЙНЕР: stroke + скругление ===
           Container(
             decoration: BoxDecoration(
-              color: scheme.surface,
               borderRadius: Light.radiusLg,
               border: Border.all(color: scheme.outline),
+              color: scheme.surface,
             ),
-            child: Column(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-                  decoration: BoxDecoration(
+            // ClipRRect обрезает всё содержимое по нижним углам
+            child: ClipRRect(
+              borderRadius: Light.radiusLg,
+              child: Column(
+                children: [
+                  // Шапка
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 11, vertical: 9),
                     color: scheme.surfaceContainerHighest,
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(Light.radiusMedium)),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: Text('Животное / корм',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: scheme.primary))),
+                        SizedBox(
+                            width: 64,
+                            child: Text('День',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: scheme.primary))),
+                        SizedBox(
+                            width: 64,
+                            child: Text('Год',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: scheme.primary))),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: Text('Животное / корм',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.primary))),
-                      SizedBox(
-                          width: 64,
-                          child: Text('День',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.primary))),
-                      SizedBox(
-                          width: 64,
-                          child: Text('Год',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.primary))),
-                    ],
+                  // Животные
+                  ...items.map((item) => _animalBlock(item)),
+                  // Итог по группе
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 11, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest,
+                      border: Border(
+                          top: BorderSide(color: scheme.outline)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: Text('Итого по группе',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: scheme.onSurface))),
+                        SizedBox(
+                            width: 64,
+                            child: Text(groupDay.toStringAsFixed(0),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: scheme.onSurface))),
+                        SizedBox(
+                            width: 64,
+                            child: Text(groupYear.toStringAsFixed(0),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: scheme.onSurface))),
+                      ],
+                    ),
                   ),
-                ),
-                ...items.map((item) => _animalBlock(item)),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHighest,
-                    border: Border(
-                        top: BorderSide(color: scheme.outline)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: Text('Итого по группе',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.onSurface))),
-                      SizedBox(
-                          width: 64,
-                          child: Text(groupDay.toStringAsFixed(0),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.onSurface))),
-                      SizedBox(
-                          width: 64,
-                          child: Text(groupYear.toStringAsFixed(0),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.onSurface))),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

@@ -32,6 +32,7 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Hero
           Container(
             height: 210,
             decoration: BoxDecoration(
@@ -52,19 +53,15 @@ class HomeScreen extends StatelessWidget {
                     isDark: isDark,
                   ),
                 ),
+                // Иллюстрация без круга
                 Center(
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark
-                          ? const Color(0x33F7F1E2)
-                          : const Color(0xB8F7F1E2),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: SvgPicture.string(
+                      _houseSvg,
+                      width: 145,
+                      height: 132,
                     ),
-                    alignment: Alignment.center,
-                    child:
-                        SvgPicture.string(_houseSvg, width: 94, height: 94),
                   ),
                 ),
               ],
@@ -152,8 +149,6 @@ class _MenuLink extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Иконка-квадрат: тёмная тема — оливковая (scheme.primary), светлая — тоже
-    // scheme.primary. Текст на кнопке: onPrimary. Стрелка: primary.
     return Material(
       color: color,
       borderRadius: Light.radiusLg,
