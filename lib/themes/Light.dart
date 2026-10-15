@@ -111,7 +111,7 @@ abstract final class Light {
 
   static TextTheme get _textTheme {
     const base = TextStyle(
-      fontFamily: 'Inter',
+      fontFamily: 'Onest',
       color: text,
       height: 1.35,
     );
@@ -175,7 +175,7 @@ abstract final class Light {
       scaffoldBackgroundColor: background,
       canvasColor: background,
       dividerColor: outline,
-      fontFamily: 'Inter',
+      fontFamily: 'Onest',
     );
 
     return baseTheme.copyWith(
@@ -187,7 +187,7 @@ abstract final class Light {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: 'Inter',
+          fontFamily: 'Onest',
           color: text,
           fontSize: 22,
           fontWeight: FontWeight.w700,
@@ -243,7 +243,7 @@ abstract final class Light {
           minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
           textStyle: const TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Onest',
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
@@ -257,7 +257,7 @@ abstract final class Light {
           minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
           textStyle: const TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Onest',
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
@@ -268,7 +268,7 @@ abstract final class Light {
         style: TextButton.styleFrom(
           foregroundColor: olive,
           textStyle: const TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Onest',
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -299,14 +299,14 @@ abstract final class Light {
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: 'Onest',
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: olive,
             );
           }
           return const TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Onest',
             fontSize: 12,
             color: textMuted,
           );

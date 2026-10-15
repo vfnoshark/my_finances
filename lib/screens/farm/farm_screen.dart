@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../themes/Light.dart';
 import '../../models/farm_stats.dart';
-import '../../models/feed_norm.dart';
 import '../../services/animal_service.dart';
 import '../../services/feed_service.dart';
+import '../../themes/light.dart';
+import '../../widgets/app_scaffold.dart';
 import 'animal_list_screen.dart';
 import 'feed_calculator_screen.dart';
 
@@ -15,208 +15,263 @@ class FarmScreen extends StatefulWidget {
 }
 
 class _FarmScreenState extends State<FarmScreen> {
-  final AnimalService _animalService = AnimalService();
-  final FeedService _feedService = FeedService();
+  final _animalService = AnimalService();
+  final _feedService = FeedService();
 
   FarmStats? _stats;
+  double _dayTotal = 0;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    _load();
   }
 
-  Future<void> _loadStats() async {
+  Future<void> _load() async {
     setState(() => _isLoading = true);
     final animals = await _animalService.getAnimals();
     final stats = await _feedService.calculateFarmStats(animals);
 
+    double day = 0;
+    for (final a in animals) {
+      final norms = await _feedService.getNormsForAnimal(a);
+      day += norms.fold<double>(0, (s, n) => s + n.amountPerDay);
+    }
+
     if (!mounted) return;
     setState(() {
       _stats = stats;
+      _dayTotal = day;
       _isLoading = false;
     });
   }
 
-  /// Pull-to-refresh: принудительно перечитываем из хранилища
-  Future<void> _refreshStats() async {
-    await _animalService.refresh();
-    await _loadStats();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Light.background,
-      appBar: AppBar(
-        title: const Text('Моя ферма'),
-        backgroundColor: Light.olive,
-        foregroundColor: Light.surface,
-        elevation: 0,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _refreshStats,
-              child: ListView(
-                padding: const EdgeInsets.all(20),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
+
+    // Градиент сводки: светлая — тёплый песочный → зелёный
+    // тёмная — тёмно-песочный → тёмно-зелёный
+    final summaryColors = isDark
+        ? const [Color(0xFF4E331B), Color(0xFF3A4A22)]
+        : const [Color(0xFFC9A875), Color(0xFF6B7A45)];
+
+    return AppScaffold(
+      withScroll: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Кнопка "назад"
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              onTap: () => Navigator.pop(context),
+              borderRadius: Light.radiusMd,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: Light.radiusMd,
+                  border: Border.all(color: scheme.outline),
+                ),
+                child: Icon(Icons.chevron_left,
+                    color: scheme.primary, size: 26),
+              ),
+            ),
+          ),
+          const SizedBox(height: Light.space5),
+
+          // Заголовок — берёт цвет из темы
+          Text('Моя ферма',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: scheme.onSurface,
+                  )),
+          const SizedBox(height: 7),
+          Text('Управляйте животными и кормами',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant)),
+          const SizedBox(height: Light.space5),
+
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            // Карточка сводки
+            Container(
+              padding: const EdgeInsets.all(Light.space5),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: summaryColors,
+                ),
+                borderRadius: Light.radiusLg,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Light.olive,
-                      borderRadius: BorderRadius.circular(16),
+                  const Text(
+                    'Потребность в кормах',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFFFF5E0),
+                      fontWeight: FontWeight.w500,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Сводка по хозяйству',
-                          style: TextStyle(
-                            color: Light.surfaceMuted,
-                            fontSize: 14,
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'В день',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFFFFF5E0),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildStatItem(
-                              'Животных',
-                              '${_stats?.totalAnimals ?? 0}',
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_dayTotal.toStringAsFixed(1)} кг',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
                             ),
-                            _buildStatItem(
-                              'Корм/год',
-                              '${(_stats?.totalFeedPerYear ?? 0).toStringAsFixed(0)} кг',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (_stats != null && _stats!.feedBreakdown.isNotEmpty) ...[
-                    const Text(
-                      'Разбивка по кормам',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    ..._stats!.feedBreakdown.entries.map((entry) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Light.surface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              entry.key.displayName,
-                              style: const TextStyle(fontSize: 16),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'В год',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFFFFF5E0),
                             ),
-                            Text(
-                              '${entry.value.toStringAsFixed(0)} кг',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Light.olive,
-                              ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${(_stats?.totalFeedPerYear ?? 0).toStringAsFixed(0)} кг',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
                             ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 20),
-                  ],
-                  _buildActionButton(
-                    context,
-                    icon: Icons.pets,
-                    title: 'Мои животные',
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AnimalListScreen(),
-                        ),
-                      );
-                      _loadStats();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildActionButton(
-                    context,
-                    icon: Icons.table_chart,
-                    title: 'Общий расчёт кормов',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FeedCalculatorScreen(),
-                        ),
-                      );
-                    },
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-    );
-  }
+            const SizedBox(height: Light.space5),
+          ],
 
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Light.surface,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+          _FarmLink(
+            icon: Icons.pets,
+            title: 'Мои животные',
+            subtitle: 'Список и карточки',
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AnimalListScreen()),
+              );
+              _load();
+            },
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Light.surfaceMuted, fontSize: 14),
-        ),
-      ],
+          const SizedBox(height: Light.space3),
+          _FarmLink(
+            icon: Icons.table_chart_outlined,
+            title: 'Расход кормов',
+            subtitle: 'Отчёт по группам',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const FeedCalculatorScreen()),
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
+class _FarmLink extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _FarmLink({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Material(
-      color: Light.surface,
-      borderRadius: BorderRadius.circular(12),
+      color: scheme.surface,
+      borderRadius: Light.radiusLg,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: Light.radiusLg,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: Light.radiusLg,
+            border: Border.all(color: scheme.outline),
+          ),
+          padding: const EdgeInsets.all(Light.space4),
           child: Row(
             children: [
-              Icon(icon, color: Light.olive),
-              const SizedBox(width: 16),
+              // Иконка — фон = primary, иконка = onPrimary
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: scheme.primary,
+                  borderRadius: Light.radiusMd,
+                ),
+                child: Icon(icon, color: scheme.onPrimary, size: 28),
+              ),
+              const SizedBox(width: Light.space4),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Заголовок — onSurface
+                    Text(title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(color: scheme.onSurface)),
+                    const SizedBox(height: 2),
+                    // Подзаголовок — onSurfaceVariant
+                    Text(subtitle,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                  ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Light.textMuted),
+              // Стрелка — primary
+              Icon(Icons.chevron_right, color: scheme.primary),
             ],
           ),
         ),

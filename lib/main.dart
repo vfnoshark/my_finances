@@ -2,9 +2,30 @@ import 'package:flutter/material.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/pin_code_screen.dart';
 import 'services/auth_service.dart';
-import 'themes/Light.dart';
+import 'services/local_storage_service.dart';
+import 'themes/dark.dart';
+import 'themes/light.dart';
 
-void main() {
+/// Глобальный контроллер темы.
+/// null  — следуем за системой
+/// true  — тёмная
+/// false — светлая
+final ValueNotifier<ThemeMode> themeNotifier =
+    ValueNotifier<ThemeMode>(ThemeMode.system);
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Загружаем сохранённый выбор темы ДО запуска приложения
+  final saved = await LocalStorageService().getDarkTheme();
+  if (saved == true) {
+    themeNotifier.value = ThemeMode.dark;
+  } else if (saved == false) {
+    themeNotifier.value = ThemeMode.light;
+  } else {
+    themeNotifier.value = ThemeMode.system;
+  }
+
   runApp(const MyApp());
 }
 
@@ -13,11 +34,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Моя Ферма',
-      debugShowCheckedModeBanner: false,
-      theme: Light.theme,
-      home: const _StartScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: 'Моя Ферма',
+          debugShowCheckedModeBanner: false,
+          theme: Light.theme,
+          darkTheme: Dark.theme,
+          themeMode: mode,
+          home: const _StartScreen(),
+        );
+      },
     );
   }
 }
@@ -30,9 +58,9 @@ class _StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<_StartScreen> {
-  final AuthService _authService = AuthService();
-  bool _isLoading = true;
-  bool _isLoggedIn = false;
+  final _auth = AuthService();
+  bool _loading = true;
+  bool _logged = false;
 
   @override
   void initState() {
@@ -41,26 +69,23 @@ class _StartScreenState extends State<_StartScreen> {
   }
 
   Future<void> _check() async {
-    final logged = await _authService.isLoggedIn();
+    final logged = await _auth.isLoggedIn();
     if (!mounted) return;
     setState(() {
-      _isLoggedIn = logged;
-      _isLoading = false;
+      _logged = logged;
+      _loading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-
-    if (_isLoggedIn) {
-      return PinCodeScreen(authService: _authService);
-    }
-
-    return const LoginScreen();
+    return _logged
+        ? PinCodeScreen(authService: _auth)
+        : const LoginScreen();
   }
 }

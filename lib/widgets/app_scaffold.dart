@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import '../themes/Light.dart';
 
 class AppScaffold extends StatelessWidget {
   final Widget child;
   final bool withScroll;
 
-  /// Максимальная ширина контента на широких экранах.
-  static const double maxContentWidth = 480;
+  static const double maxContentWidth = 430;
 
   const AppScaffold({
     super.key,
@@ -17,20 +15,18 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Light.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: maxContentWidth,
-            ),
+            constraints: const BoxConstraints(maxWidth: maxContentWidth),
             child: withScroll
                 ? SingleChildScrollView(
-                    padding: const EdgeInsets.all(Light.space6),
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
                     child: child,
                   )
                 : Padding(
-                    padding: const EdgeInsets.all(Light.space6),
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
                     child: child,
                   ),
           ),

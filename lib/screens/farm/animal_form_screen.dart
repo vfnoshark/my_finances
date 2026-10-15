@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../themes/Light.dart';
 import '../../models/animal.dart';
 import '../../services/animal_service.dart';
+import '../../themes/light.dart';
+import '../../widgets/animal_icon.dart';
+import '../../widgets/app_scaffold.dart';
 
 class AnimalFormScreen extends StatefulWidget {
   final Animal? animal;
-
   const AnimalFormScreen({super.key, this.animal});
 
   @override
@@ -14,17 +15,17 @@ class AnimalFormScreen extends StatefulWidget {
 
 class _AnimalFormScreenState extends State<AnimalFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final AnimalService _animalService = AnimalService();
+  final _animalService = AnimalService();
 
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _weightController;
-  late TextEditingController _productivityController;
+  late TextEditingController _yieldController;
 
-  AnimalType _selectedType = AnimalType.cattle;
-  ProductivityType _selectedProductivity = ProductivityType.milk;
-  String _selectedConditions = '';
-  bool _isSaving = false;
+  AnimalType _type = AnimalType.cattle;
+  ProductivityType _productivity = ProductivityType.milk;
+  String? _conditions;
+  bool _saving = false;
 
   bool get _isEditing => widget.animal != null;
 
@@ -32,21 +33,18 @@ class _AnimalFormScreenState extends State<AnimalFormScreen> {
   void initState() {
     super.initState();
     final a = widget.animal;
-
     _nameController = TextEditingController(text: a?.name ?? '');
     _ageController = TextEditingController(text: a?.ageMonths.toString() ?? '');
     _weightController = TextEditingController(text: a?.weight.toString() ?? '');
-    _productivityController =
+    _yieldController =
         TextEditingController(text: a?.productivity.toString() ?? '');
+    _type = a?.type ?? AnimalType.cattle;
+    _productivity = a?.productivityType ?? _type.productivityOptions.first;
 
-    if (a != null) {
-      _selectedType = a.type;
-      _selectedProductivity = a.productivityType;
-      _selectedConditions = a.conditions;
+    if (a != null && a.conditions.isNotEmpty) {
+      _conditions = a.conditions;
     } else {
-      _selectedType = AnimalType.cattle;
-      _selectedProductivity = _selectedType.productivityOptions.first;
-      _selectedConditions = _selectedType.conditionsOptions.first;
+      _conditions = _type.conditionsOptions.first;
     }
   }
 
@@ -55,28 +53,33 @@ class _AnimalFormScreenState extends State<AnimalFormScreen> {
     _nameController.dispose();
     _ageController.dispose();
     _weightController.dispose();
-    _productivityController.dispose();
+    _yieldController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_conditions == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Выберите условия содержания')),
+      );
+      return;
+    }
 
-    setState(() => _isSaving = true);
+    setState(() => _saving = true);
 
     final animal = Animal(
       id: widget.animal?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
-      type: _selectedType,
+      type: _type,
       name: _nameController.text.trim(),
       ageMonths: int.parse(_ageController.text.trim()),
       weight: double.parse(_weightController.text.trim().replaceAll(',', '.')),
-      productivityType: _selectedProductivity,
-      productivity: double.tryParse(
-            _productivityController.text.trim().replaceAll(',', '.'),
-          ) ??
-          0,
-      conditions: _selectedConditions,
+      productivityType: _productivity,
+      productivity:
+          double.tryParse(_yieldController.text.trim().replaceAll(',', '.')) ??
+              0,
+      conditions: _conditions!,
     );
 
     try {
@@ -85,185 +88,164 @@ class _AnimalFormScreenState extends State<AnimalFormScreen> {
       } else {
         await _animalService.addAnimal(animal);
       }
-
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
-      );
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Ошибка: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Light.background,
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Редактировать' : 'Добавить животное'),
-        backgroundColor: Light.olive,
-        foregroundColor: Light.surface,
-        elevation: 0,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            // Тип животного
-            const Text(
-              'Тип животного',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildTypeSelector(),
-            const SizedBox(height: 24),
+    final scheme = Theme.of(context).colorScheme;
 
-            // Имя
-            _buildTextField(
+    return AppScaffold(
+      withScroll: true,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: Light.radiusMd,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: Light.radiusMd,
+                      border: Border.all(color: scheme.outline),
+                    ),
+                    child: Icon(Icons.chevron_left,
+                        color: scheme.primary, size: 26),
+                  ),
+                ),
+                const SizedBox(width: Light.space3),
+                Text('МОЯ ФЕРМА / ЖИВОТНЫЕ',
+                    style: TextStyle(
+                        fontSize: 13, color: scheme.onSurfaceVariant)),
+              ],
+            ),
+            const SizedBox(height: Light.space4),
+            Text(_isEditing ? 'Редактировать' : 'Добавить животное',
+                style: Theme.of(context).textTheme.headlineLarge),
+            const SizedBox(height: 7),
+            Text(
+                'Заполните карточку, чтобы вести учёт животных и их продуктивности.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: scheme.onSurfaceVariant)),
+            const SizedBox(height: Light.space5),
+
+            Text('Выберите тип животного',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.primary)),
+            const SizedBox(height: 10),
+            _typeSelector(),
+            const SizedBox(height: Light.space5),
+
+            _field(
+              label: 'Кличка или номер',
               controller: _nameController,
-              label: 'Имя или номер',
-              icon: Icons.badge_outlined,
+              hint: 'Например, Белянка или № 024',
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Введите имя' : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Light.space3),
 
-            // Возраст
-            _buildTextField(
-              controller: _ageController,
-              label: 'Возраст (месяцев)',
-              icon: Icons.cake_outlined,
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Введите возраст';
-                final n = int.tryParse(v.trim());
-                if (n == null || n <= 0) return 'Некорректное число';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Вес
-            _buildTextField(
-              controller: _weightController,
-              label: 'Вес (кг)',
-              icon: Icons.scale_outlined,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Введите вес';
-                final n = double.tryParse(v.trim().replaceAll(',', '.'));
-                if (n == null || n <= 0) return 'Некорректное число';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Продуктивность (тип)
-            const Text(
-              'Тип продуктивности',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<ProductivityType>(
-              value: _selectedProductivity,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.trending_up),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Light.surface,
-              ),
-              items: _selectedType.productivityOptions.map((type) {
-                return DropdownMenuItem(
-                  value: type,
-                  child: Text(type.displayName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() {
-                  _selectedProductivity = value;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Продуктивность (значение)
-            _buildTextField(
-              controller: _productivityController,
-              label: 'Продуктивность',
-              hint: _selectedProductivity.unit,
-              icon: Icons.numbers,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return null;
-                final n = double.tryParse(v.trim().replaceAll(',', '.'));
-                if (n == null || n < 0) return 'Некорректное число';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Условия содержания
-            const Text(
-              'Условия содержания',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _selectedConditions.isEmpty ? null : _selectedConditions,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.home_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Light.surface,
-              ),
-              items: _selectedType.conditionsOptions.map((c) {
-                return DropdownMenuItem(value: c, child: Text(c));
-              }).toList(),
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _selectedConditions = value);
-              },
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Выберите условия' : null,
-            ),
-            const SizedBox(height: 32),
-
-            // Кнопка сохранения
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Light.olive,
-                  foregroundColor: Light.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  child: _field(
+                    label: 'Возраст, месяцев',
+                    controller: _ageController,
+                    hint: '12',
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Введите возраст';
+                      }
+                      final n = int.tryParse(v.trim());
+                      if (n == null || n <= 0) return 'Некорректно';
+                      return null;
+                    },
                   ),
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Light.surface,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        _isEditing ? 'Сохранить' : 'Добавить',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-              ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: _field(
+                    label: 'Вес, кг',
+                    controller: _weightController,
+                    hint: '85',
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Введите вес';
+                      final n =
+                          double.tryParse(v.trim().replaceAll(',', '.'));
+                      if (n == null || n <= 0) return 'Некорректно';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Light.space3),
+
+            _dropdown<ProductivityType>(
+              label: 'Тип продукции',
+              value: _productivity,
+              items: _type.productivityOptions
+                  .map((p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(p.displayName),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) setState(() => _productivity = v);
+              },
+            ),
+            const SizedBox(height: Light.space3),
+
+            _field(
+              label: 'Продуктивность',
+              controller: _yieldController,
+              hint: 'Например, ${_productivity.unit}',
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: Light.space3),
+
+            _dropdown<String>(
+              label: 'Условия содержания',
+              value: _conditions,
+              items: _type.conditionsOptions
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) => setState(() => _conditions = v),
+            ),
+            const SizedBox(height: Light.space5),
+
+            _saving
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _save,
+                    child: Text(
+                        _isEditing ? 'Сохранить' : 'Добавить животное  →'),
+                  ),
+            const SizedBox(height: Light.space5),
+            Center(
+              child: Text('Каждое животное — часть вашей фермы',
+                  style: Theme.of(context).textTheme.bodySmall),
             ),
           ],
         ),
@@ -271,72 +253,149 @@ class _AnimalFormScreenState extends State<AnimalFormScreen> {
     );
   }
 
-  Widget _buildTypeSelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+  Widget _typeSelector() {
+    final scheme = Theme.of(context).colorScheme;
+    return GridView.count(
+      crossAxisCount: 5,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 0.72,
       children: AnimalType.values.map((type) {
-        final isSelected = _selectedType == type;
+        final selected = _type == type;
         return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedType = type;
-              // Сбрасываем продуктивность и условия под новый тип
-              _selectedProductivity = type.productivityOptions.first;
-              _selectedConditions = type.conditionsOptions.first;
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? Light.olive : Light.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? Light.olive : Light.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(type.icon, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 6),
-                Text(
-                  type.displayName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Light.surface : Light.text,
+          onTap: () => setState(() {
+            _type = type;
+            _productivity = type.productivityOptions.first;
+            _conditions = type.conditionsOptions.first;
+          }),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF94A85E)
+                              : const Color(0xFF6C7545))
+                          : scheme.primary,
+                      borderRadius: BorderRadius.circular(17),
+                      border: selected
+                          ? Border.all(
+                              color: const Color(0xFFD6C29C), width: 3)
+                          : null,
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: AnimalIcon(type: type, size: 34),
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                type.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? scheme.primary : scheme.onSurface,
+                ),
+              ),
+            ],
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
+  Widget _dropdown<T>({
     required String label,
-    required IconData icon,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurfaceVariant)),
+        ),
+        DropdownButtonFormField<T>(
+          value: value,
+          isExpanded: true,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: scheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: Light.radiusMd,
+              borderSide: BorderSide(color: scheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: Light.radiusMd,
+              borderSide: BorderSide(color: scheme.outline),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          ),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  Widget _field({
+    required String label,
+    required TextEditingController controller,
     String? hint,
+    int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurfaceVariant)),
         ),
-        filled: true,
-        fillColor: Light.surface,
-      ),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: scheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: Light.radiusMd,
+              borderSide: BorderSide(color: scheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: Light.radiusMd,
+              borderSide: BorderSide(color: scheme.outline),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          ),
+        ),
+      ],
     );
   }
 }

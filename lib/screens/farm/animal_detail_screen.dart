@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../themes/Light.dart';
 import '../../models/animal.dart';
 import '../../models/feed_norm.dart';
 import '../../services/animal_service.dart';
 import '../../services/feed_service.dart';
+import '../../themes/light.dart';
+import '../../widgets/animal_icon.dart';
+import '../../widgets/app_scaffold.dart';
 
 class AnimalDetailScreen extends StatefulWidget {
   final Animal animal;
-
-  const AnimalDetailScreen({
-    super.key,
-    required this.animal,
-  });
+  const AnimalDetailScreen({super.key, required this.animal});
 
   @override
-  State<AnimalDetailScreen> createState() =>
-      _AnimalDetailScreenState();
+  State<AnimalDetailScreen> createState() => _AnimalDetailScreenState();
 }
 
 class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
@@ -32,340 +29,333 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
   }
 
   Future<void> _loadNorms() async {
-    final norms =
-        await _feedService.getNormsForAnimal(widget.animal);
-
+    final norms = await _feedService.getNormsForAnimal(widget.animal);
     if (!mounted) return;
-
     setState(() {
       _norms = norms;
       _isLoading = false;
     });
   }
 
-  Future<void> _confirmDelete(
-    BuildContext context,
-    Animal animal,
-  ) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _delete() async {
+    final scheme = Theme.of(context).colorScheme;
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text('Удалить животное?'),
-        content: Text(
-          '«${animal.name}» будет удалено безвозвратно.',
-        ),
+        content: Text('«${widget.animal.name}» будет удалено безвозвратно.'),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
-            child: const Text('Отмена'),
-          ),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Отмена')),
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Удалить',
-              style: TextStyle(color: Light.error),
-            ),
-          ),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Удалить', style: TextStyle(color: scheme.error))),
         ],
       ),
     );
-
-    if (confirmed == true) {
-      await _animalService.deleteAnimal(animal.id);
-
+    if (ok == true) {
+      await _animalService.deleteAnimal(widget.animal.id);
       if (!mounted) return;
-
       Navigator.pop(context, true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final animal = widget.animal;
-    final textTheme = Theme.of(context).textTheme;
+    final a = widget.animal;
+    final scheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Карточка животного'),
-        actions: [
-          IconButton(
-            tooltip: 'Удалить животное',
-            icon: const Icon(Icons.delete_outline),
-            color: Light.error,
-            onPressed: () =>
-                _confirmDelete(context, animal),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                Light.space5,
-                Light.space2,
-                Light.space5,
-                Light.space8,
+    return AppScaffold(
+      withScroll: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              InkWell(
+                onTap: () => Navigator.pop(context),
+                borderRadius: Light.radiusMd,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: Light.radiusMd,
+                    border: Border.all(color: scheme.outline),
+                  ),
+                  child: Icon(Icons.chevron_left,
+                      color: scheme.primary, size: 26),
+                ),
               ),
+              const Spacer(),
+              IconButton(
+                onPressed: _delete,
+                icon: Icon(Icons.delete_outline, color: scheme.error),
+              ),
+            ],
+          ),
+          const SizedBox(height: Light.space3),
+
+          Center(
+            child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(
-                    Light.space5,
+                  width: 116,
+                  height: 116,
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
+                    borderRadius: Light.radiusXl,
                   ),
-                  decoration: Light.heroDecoration,
+                  padding: const EdgeInsets.all(14),
+                  child: AnimalIcon(type: a.type, size: 88),
+                ),
+                const SizedBox(height: Light.space3),
+                Text(a.name,
+                    style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${a.type.displayName} · Активная карточка',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: scheme.primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: Light.space5),
+
+          Row(
+            children: [
+              Expanded(
+                  child: _StatCard(
+                      label: 'Возраст', value: '${a.ageMonths} мес.')),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: _StatCard(
+                      label: 'Вес', value: '${a.weight.toStringAsFixed(0)} кг')),
+            ],
+          ),
+          const SizedBox(height: 13),
+
+          Container(
+            padding: const EdgeInsets.all(Light.space4),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest,
+              borderRadius: Light.radiusLg,
+            ),
+            child: Row(
+              children: [
+                Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 104,
-                        height: 104,
-                        alignment: Alignment.center,
-                        decoration: Light.oliveCardDecoration,
-                        child: Text(
-                          animal.type.icon,
-                          style: const TextStyle(
-                            fontSize: 58,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: Light.space3),
+                      Text('Тип продукции',
+                          style: TextStyle(
+                              fontSize: 11, color: scheme.onSurfaceVariant)),
+                      const SizedBox(height: 5),
+                      Text(a.productivityType.displayName,
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: scheme.onSurface)),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Продуктивность',
+                          style: TextStyle(
+                              fontSize: 11, color: scheme.onSurfaceVariant)),
+                      const SizedBox(height: 5),
                       Text(
-                        animal.name,
-                        textAlign: TextAlign.center,
-                        style: textTheme.headlineLarge,
-                      ),
-                      const SizedBox(height: Light.space1),
-                      Text(
-                        animal.type.displayName,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: Light.oliveDark,
-                        ),
+                          '${a.productivity.toStringAsFixed(1)} ${a.productivityType.unit}',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: scheme.onSurface)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.all(Light.space4),
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: Light.radiusLg,
+              border: Border.all(color: scheme.outline),
+            ),
+            child: Column(
+              children: [
+                Text('Условия содержания',
+                    style: TextStyle(
+                        fontSize: 12, color: scheme.onSurfaceVariant)),
+                const SizedBox(height: 5),
+                Text(a.conditions,
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: scheme.onSurface)),
+              ],
+            ),
+          ),
+          const SizedBox(height: Light.space5),
+
+          Row(
+            children: [
+              Text('Норма корма',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const Spacer(),
+              Text('На день и год',
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+          const SizedBox(height: Light.space3),
+
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: Light.radiusLg,
+                border: Border.all(color: scheme.outline),
+              ),
+              child: Column(
+                children: _norms.map((n) => _FeedRow(norm: n)).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  const _StatCard({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: Light.radiusLg,
+        border: Border.all(color: scheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+          const SizedBox(height: 5),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  height: 1.2,
+                  color: scheme.onSurface)),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedRow extends StatelessWidget {
+  final FeedNorm norm;
+  const _FeedRow({required this.norm});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: scheme.outline, width: 1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(norm.feedType.displayName,
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurface)),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: scheme.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('Корм',
+                    style: TextStyle(
+                        fontSize: 11, color: scheme.primary)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Row(
+            children: [
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    style:
+                        TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                    children: [
+                      const TextSpan(text: 'В день: '),
+                      TextSpan(
+                        text: '${norm.amountPerDay.toStringAsFixed(2)} кг',
+                        style: TextStyle(
+                            color: scheme.onSurface,
+                            fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: Light.space5),
-                Text(
-                  'Характеристики',
-                  style: textTheme.titleLarge,
-                ),
-                const SizedBox(height: Light.space3),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoCard(
-                        'Возраст',
-                        '${animal.ageMonths} мес.',
-                        Icons.cake_outlined,
-                      ),
-                    ),
-                    const SizedBox(width: Light.space3),
-                    Expanded(
-                      child: _buildInfoCard(
-                        'Вес',
-                        '${animal.weight.toStringAsFixed(0)} кг',
-                        Icons.monitor_weight_outlined,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: Light.space3),
-                _buildInfoRow(
-                  'Продуктивность',
-                  animal.productivity.toStringAsFixed(1),
-                ),
-                _buildInfoRow(
-                  'Условия содержания',
-                  animal.conditions,
-                ),
-                const SizedBox(height: Light.space5),
-                Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Норма корма',
-                      style: textTheme.titleLarge,
-                    ),
-                    Text(
-                      '${_norms.length} позиций',
-                      style: textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: Light.space3),
-                if (_norms.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(
-                      Light.space5,
-                    ),
-                    decoration: Light.cardDecoration,
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.grass_outlined,
-                          size: 34,
-                          color: Light.oliveSoft,
-                        ),
-                        const SizedBox(height: Light.space2),
-                        Text(
-                          'Нормы кормления пока не добавлены',
-                          textAlign: TextAlign.center,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: Light.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  ..._norms.map((norm) {
-                    return Container(
-                      margin: const EdgeInsets.only(
-                        bottom: Light.space3,
-                      ),
-                      padding: const EdgeInsets.all(
-                        Light.space4,
-                      ),
-                      decoration: Light.cardDecoration,
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Light.surfaceMuted,
-                                  borderRadius: Light.radiusMd,
-                                ),
-                                child: const Icon(
-                                  Icons.grass_outlined,
-                                  color: Light.olive,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: Light.space3,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  norm.feedType.displayName,
-                                  style: textTheme.titleMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: Light.space4),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildFeedValue(
-                                  'В день',
-                                  '${norm.amountPerDay.toStringAsFixed(2)} кг',
-                                ),
-                              ),
-                              const SizedBox(
-                                width: Light.space2,
-                              ),
-                              Expanded(
-                                child: _buildFeedValue(
-                                  'В год',
-                                  '${norm.amountPerYear.toStringAsFixed(0)} кг',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildInfoCard(
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(Light.space4),
-      decoration: Light.cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Light.olive, size: 22),
-          const SizedBox(height: Light.space3),
-          Text(label, style: textTheme.bodySmall),
-          const SizedBox(height: Light.space1),
-          Text(
-            value,
-            style: textTheme.titleLarge,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: Light.space3),
-      padding: const EdgeInsets.all(Light.space4),
-      decoration: Light.cardDecoration,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: textTheme.bodyMedium?.copyWith(
-                color: Light.textMuted,
               ),
-            ),
-          ),
-          const SizedBox(width: Light.space3),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: textTheme.titleMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeedValue(String label, String value) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(Light.space3),
-      decoration: BoxDecoration(
-        color: Light.surfaceMuted,
-        borderRadius: Light.radiusMd,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: textTheme.bodySmall),
-          const SizedBox(height: Light.space1),
-          Text(
-            value,
-            style: textTheme.titleMedium?.copyWith(
-              color: Light.oliveDark,
-            ),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    style:
+                        TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                    children: [
+                      const TextSpan(text: 'В год: '),
+                      TextSpan(
+                        text: '${norm.amountPerYear.toStringAsFixed(0)} кг',
+                        style: TextStyle(
+                            color: scheme.onSurface,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

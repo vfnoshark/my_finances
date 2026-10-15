@@ -13,6 +13,7 @@ class LocalStorageService {
   static const String _loginKey = 'user_login';
   static const String _nameKey = 'user_name';
   static const String _versionKey = 'storage_version';
+  static const String _darkThemeKey = 'dark_theme_enabled';
 
   static const int _currentVersion = 2;
 
@@ -88,6 +89,25 @@ class LocalStorageService {
     return prefs.getString(_nameKey) ?? '';
   }
 
+  // ==================== ТЕМА ====================
+
+  Future<void> setDarkTheme(bool value) async {
+    final prefs = await _prefs;
+    await prefs.setBool(_darkThemeKey, value);
+  }
+
+  Future<bool?> getDarkTheme() async {
+    final prefs = await _prefs;
+    return prefs.getBool(_darkThemeKey);
+  }
+
+  Future<void> clearTheme() async {
+    final prefs = await _prefs;
+    await prefs.remove(_darkThemeKey);
+  }
+
+  // ==================== ОБЩЕЕ ====================
+
   Future<void> clearAll() async {
     final prefs = await _prefs;
     await prefs.remove(_animalsKey);
@@ -96,6 +116,7 @@ class LocalStorageService {
     await prefs.remove(_loginKey);
     await prefs.remove(_nameKey);
     await prefs.remove(_versionKey);
+    await prefs.remove(_darkThemeKey);
   }
 
   Future<void> clearAnimals() async {
