@@ -32,6 +32,8 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 8), // было 38
+
           // Hero
           Container(
             height: 210,
@@ -53,14 +55,13 @@ class HomeScreen extends StatelessWidget {
                     isDark: isDark,
                   ),
                 ),
-                // Иллюстрация без круга
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: SvgPicture.string(
                       _houseSvg,
-                      width: 145,
-                      height: 132,
+                      width: 130,
+                      height: 122,
                     ),
                   ),
                 ),

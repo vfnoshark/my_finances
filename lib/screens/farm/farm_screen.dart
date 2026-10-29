@@ -52,8 +52,6 @@ class _FarmScreenState extends State<FarmScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
 
-    // Градиент сводки: светлая — тёплый песочный → зелёный
-    // тёмная — тёмно-песочный → тёмно-зелёный
     final summaryColors = isDark
         ? const [Color(0xFF4E331B), Color(0xFF3A4A22)]
         : const [Color(0xFFC9A875), Color(0xFF6B7A45)];
@@ -63,6 +61,8 @@ class _FarmScreenState extends State<FarmScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 8), // было больше
+
           // Кнопка "назад"
           Align(
             alignment: Alignment.centerLeft,
@@ -82,9 +82,8 @@ class _FarmScreenState extends State<FarmScreen> {
               ),
             ),
           ),
-          const SizedBox(height: Light.space5),
+          const SizedBox(height: Light.space4), // было Light.space5
 
-          // Заголовок — берёт цвет из темы
           Text('Моя ферма',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     color: scheme.onSurface,
@@ -95,12 +94,11 @@ class _FarmScreenState extends State<FarmScreen> {
                   .textTheme
                   .bodyMedium
                   ?.copyWith(color: scheme.onSurfaceVariant)),
-          const SizedBox(height: Light.space5),
+          const SizedBox(height: Light.space4),
 
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else ...[
-            // Карточка сводки
             Container(
               padding: const EdgeInsets.all(Light.space5),
               decoration: BoxDecoration(
@@ -129,13 +127,10 @@ class _FarmScreenState extends State<FarmScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'В день',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFFFFF5E0),
-                            ),
-                          ),
+                          const Text('В день',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFFFF5E0))),
                           const SizedBox(height: 4),
                           Text(
                             '${_dayTotal.toStringAsFixed(1)} кг',
@@ -152,13 +147,10 @@ class _FarmScreenState extends State<FarmScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text(
-                            'В год',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFFFFF5E0),
-                            ),
-                          ),
+                          const Text('В год',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFFFF5E0))),
                           const SizedBox(height: 4),
                           Text(
                             '${(_stats?.totalFeedPerYear ?? 0).toStringAsFixed(0)} кг',
@@ -176,7 +168,7 @@ class _FarmScreenState extends State<FarmScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: Light.space5),
+            const SizedBox(height: Light.space4),
           ],
 
           _FarmLink(
@@ -239,7 +231,6 @@ class _FarmLink extends StatelessWidget {
           padding: const EdgeInsets.all(Light.space4),
           child: Row(
             children: [
-              // Иконка — фон = primary, иконка = onPrimary
               Container(
                 width: 56,
                 height: 56,
@@ -254,14 +245,12 @@ class _FarmLink extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Заголовок — onSurface
                     Text(title,
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
                             ?.copyWith(color: scheme.onSurface)),
                     const SizedBox(height: 2),
-                    // Подзаголовок — onSurfaceVariant
                     Text(subtitle,
                         style: Theme.of(context)
                             .textTheme
@@ -270,7 +259,6 @@ class _FarmLink extends StatelessWidget {
                   ],
                 ),
               ),
-              // Стрелка — primary
               Icon(Icons.chevron_right, color: scheme.primary),
             ],
           ),

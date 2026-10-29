@@ -40,7 +40,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _name = name;
       _login = login;
-      // Если пользователь не выбирал — берём текущее состояние системы
       _darkTheme = saved ?? systemDark;
       _loading = false;
     });
@@ -74,26 +73,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: Light.radiusMd,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: scheme.surface,
-                        borderRadius: Light.radiusMd,
-                        border: Border.all(color: scheme.outline),
-                      ),
-                      child: Icon(
-                        Icons.chevron_left,
-                        color: scheme.primary,
-                        size: 26,
+                const SizedBox(height: 8),
+
+                // Кнопка "Назад" + breadcrumb
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: Light.radiusMd,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: scheme.surface,
+                          borderRadius: Light.radiusMd,
+                          border: Border.all(color: scheme.outline),
+                        ),
+                        child: Icon(Icons.chevron_left,
+                            color: scheme.primary, size: 26),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: Light.space3),
+                    Text('ПРОФИЛЬ',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.1,
+                            color: scheme.onSurfaceVariant)),
+                  ],
                 ),
                 const SizedBox(height: Light.space4),
 

@@ -263,18 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 30),
 
           // ==================== HOME INDICATOR ====================
-          Center(
-            child: Container(
-              width: 134,
-              height: 5,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFFF5F5F2)
-                    : const Color(0xFF171914),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ),
+
         ],
       ),
     );

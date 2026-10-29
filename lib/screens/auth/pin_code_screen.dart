@@ -129,25 +129,7 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: () => Navigator.pop(context),
-              borderRadius: Light.radiusMd,
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  borderRadius: Light.radiusMd,
-                  border: Border.all(color: scheme.outline),
-                ),
-                child: Icon(Icons.chevron_left,
-                    color: scheme.primary, size: 26),
-              ),
-            ),
-          ),
-          const SizedBox(height: Light.space4),
+          // Кнопка "назад" убрана
 
           Container(
             padding: const EdgeInsets.all(Light.space5),
@@ -200,9 +182,7 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
                 height: active ? 14 : 13,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: active
-                      ? scheme.primary
-                      : scheme.outline,
+                  color: active ? scheme.primary : scheme.outline,
                 ),
               );
             }),
@@ -269,12 +249,8 @@ class _PinCodeScreenState extends State<PinCodeScreen> {
 
     return Material(
       color: isClear
-          ? (isDark
-              ? const Color(0xFF262B20)
-              : const Color(0xFFE9E0CA))
-          : (isDark
-              ? const Color(0xFF3A4229)
-              : const Color(0xFFD3B789)),
+          ? (isDark ? const Color(0xFF262B20) : const Color(0xFFE9E0CA))
+          : (isDark ? const Color(0xFF3A4229) : const Color(0xFFD3B789)),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
