@@ -63,7 +63,7 @@
 
 Вся проектная документация находится в папке `docs/` в корне репозитория:
 
-- **Презентация проекта:** [Открыть PDF](https://drive.google.com/file/d/1yq5gmjV2lLgi5U0cX31xqR0yEFjeXNXm/view?usp=sharing)
+- **Презентация проекта:** [Открыть PDF](https://drive.google.com/file/d/1DalqgSwgAtAXxLSjrIDzJsQ5nth1ZKQf/view?usp=drivesdk)
 - **Ссылка на макеты в Figma:** [Figma Project](https://www.figma.com/design/NN6qM1Ec0hXqXn3IpInXb8/my_finances_app?node-id=0-1&t=2F1GbvqD8lHwbwaY-1)
 - **Демо-видео (до 2 мин):** [Смотреть видео](https://drive.google.com/file/d/1OiNgYsOsfRB26rVZrpNCiZjQ-72gLRLE/view?usp=sharing)
 
